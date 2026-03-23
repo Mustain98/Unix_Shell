@@ -1,0 +1,29 @@
+mCertikOS Shell Commands
+========================
+
+Process commands (run as separate processes, support pipes):
+  LS              - list files in current directory
+  CAT [file]      - print file to stdout, or copy stdin to stdout
+  ROT13           - apply ROT13 cipher to stdin, write to stdout
+
+Built-in shell commands:
+  ls [path]       - list directory
+  pwd             - print working directory
+  cd [path]       - change directory
+  cat <file>      - print file content
+  touch <file>    - create empty file
+  write <str> <file>   - write string to file
+  append <str> <file>  - append string to file
+  mkdir <dir>     - create directory
+  cp [-r] <src> <dst>  - copy file or directory
+  mv <src> <dst>  - move file or directory
+  rm [-r] <path>  - remove file or directory
+  kill -N <pid>   - send signal N to process
+  trap <signum>   - register handler for signal
+  spawn <id>      - spawn process by elf_id
+  help            - show this help
+
+Pipeline examples (use UPPERCASE for process commands):
+  LS | ROT13
+  CAT readme.txt | ROT13
+  LS | CAT | ROT13
