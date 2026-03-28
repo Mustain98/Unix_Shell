@@ -315,24 +315,53 @@ pipe_read(struct pipe *p, char *addr, int n)
 int
 console_read(char *addr, int n)
 {
-  int i;
+  int i = 0;
   char c;
   
-  for(i = 0; i < n; i++){
+  while(i < n){
     // Read one character at a time from console
     while((c = cons_getc()) == 0){
+      // Enable interrupts while waiting so keyboard strokes can be buffered
+      intr_local_enable();
       // Yield CPU while waiting for input
       thread_yield();
     }
     
+    // Process Backspace
+    if (c == 0x08 || c == 0x7f) {
+      if (i > 0) {
+        i--;
+        cons_putc('\b');
+        cons_putc(' ');
+        cons_putc('\b');
+      }
+      continue;
+    }
+
+    // Process EOF / Interrupt (Ctrl+D = 0x04, Ctrl+C = 0x03)
+    if (c == 0x04) {
+      return i; // return bytes read so far. 0 if empty -> EOF.
+    }
+    if (c == 0x03) {
+      cons_putc('^');
+      cons_putc('C');
+      cons_putc('\n');
+      return 0; // Abort line, return EOF.
+    }
+    
+    // Convert carriage return to newline for proper UNIX terminal behavior
+    if (c == '\r') {
+      c = '\n';
+    }
+
     // Echo the character back to console
     cons_putc(c);
     
-    addr[i] = c;
+    addr[i++] = c;
     
     // Stop at newline (return count includes the newline)
-    if(c == '\n' || c == '\r')
-      return i + 1;
+    if(c == '\n')
+      return i;
   }
   
   return i;

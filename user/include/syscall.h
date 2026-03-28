@@ -469,5 +469,12 @@ sys_pause(void)
 	return errno ? -1 : 0;
 }
 
+static gcc_inline void sys_exit(void) {
+    asm volatile("int %0" : : "i" (T_SYSCALL), "a" (SYS_exit) : "cc", "memory");
+}
+
+static gcc_inline void sys_waitpid(int pid) {
+    asm volatile("int %0" : : "i" (T_SYSCALL), "a" (SYS_waitpid), "b" (pid) : "cc", "memory");
+}
 
 #endif

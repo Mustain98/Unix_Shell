@@ -20,6 +20,7 @@
 #include <kern/fs/params.h>
 #include <lib/ipc.h>
 #include <lib/monitor.h>
+#include <lib/spinlock.h>
 
 #include "import.h"
 
@@ -30,7 +31,7 @@ extern spinlock_t msg_lock;
 void sys_sync_send(tf_t *tf){
    unsigned int cur_pid;
    unsigned int recv_pid, user_addr, length;
-//   spinlock_acquire(&msg_lock);
+   spinlock_acquire(&msg_lock);
    recv_pid = syscall_get_arg2(tf);
    user_addr = syscall_get_arg3(tf);
    length = syscall_get_arg4(tf);
@@ -45,14 +46,14 @@ void sys_sync_send(tf_t *tf){
       thread_sleep(&msgBlock[cur_pid].recv_cv, &msg_lock);
    }
    syscall_set_errno(tf, E_SUCC);
-//   spinlock_release(&msg_lock);
+   spinlock_release(&msg_lock);
    return ;
 }
 
 void sys_sync_recv(tf_t *tf){
    unsigned int cur_pid;
    unsigned int send_pid, user_recv_addr, recv_length, send_length, copy_length, user_send_addr;
-//   spinlock_acquire(&msg_lock);
+   spinlock_acquire(&msg_lock);
 
    send_pid = syscall_get_arg2(tf);
    user_recv_addr = syscall_get_arg3(tf);
@@ -74,7 +75,7 @@ void sys_sync_recv(tf_t *tf){
    thread_wakeup(&msgBlock[send_pid].recv_cv);
    syscall_set_errno(tf, E_SUCC);
    syscall_set_retval1(tf, copy_length);
-//   spinlock_release(&msg_lock);
+   spinlock_release(&msg_lock);
    return ;
 }
 
@@ -521,5 +522,60 @@ void sys_sigreturn(tf_t *tf)
     tf->esp = saved_esp;
     tf->eip = saved_eip;
 
+    syscall_set_errno(tf, E_SUCC);
+}
+
+void sys_exit(tf_t *tf) {
+    unsigned int pid = get_curid();
+
+    int i;
+    struct file **openfiles;
+
+    KERN_INFO("[SYS_EXIT] pid=%d exiting\n", pid);
+
+    /* Close all open file descriptors to prevent pipe deadlocks */
+    openfiles = tcb_get_openfiles(pid);
+    for (i = 0; i < NOFILE; i++) {
+        if (openfiles[i] != 0) {
+            file_close(openfiles[i]);
+            tcb_set_openfiles(pid, i, 0);
+        }
+    }
+
+    /* Mark as dead and clear signals */
+    tcb_set_state(pid, TSTATE_DEAD);
+    tqueue_remove(NUM_IDS, pid);
+    tcb_set_pending_signals(pid, 0);
+
+    /* Refund quota to parent so shell can spawn more children */
+    unsigned int parent = container_get_parent(pid);
+    unsigned int quota = container_get_quota(pid);
+    container_refund_usage(parent, quota);
+
+    KERN_INFO("[SYS_EXIT] pid=%d state=DEAD, switching away\n", pid);
+
+    /* Switch away permanently — do NOT re-enqueue (unlike thread_yield) */
+    thread_exit();
+}
+
+void sys_waitpid(tf_t *tf) {
+    int target_pid = syscall_get_arg2(tf);
+    int waiter = get_curid();
+    
+    KERN_INFO("[SYS_WAITPID] waiter=%d waiting for pid=%d state=%d\n",
+              waiter, target_pid, tcb_get_state(target_pid));
+
+    // Validate target_pid
+    if (target_pid < 0 || target_pid >= NUM_IDS) {
+        syscall_set_errno(tf, E_INVAL_PID);
+        return;
+    }
+    
+    // Spin yield until target process state is DEAD
+    while (tcb_get_state(target_pid) != TSTATE_DEAD) {
+        sys_yield(tf);
+    }
+    
+    KERN_INFO("[SYS_WAITPID] waiter=%d target=%d now DEAD\n", waiter, target_pid);
     syscall_set_errno(tf, E_SUCC);
 }

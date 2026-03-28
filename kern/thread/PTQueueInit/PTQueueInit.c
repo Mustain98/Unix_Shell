@@ -85,10 +85,17 @@ unsigned int tqueue_dequeue(unsigned int chid)
  */
 void tqueue_remove(unsigned int chid, unsigned int pid)
 {
-	unsigned int prev, next;
+	unsigned int prev, next, head, tail;
 
+	head = tqueue_get_head(chid);
+	tail = tqueue_get_tail(chid);
 	prev = tcb_get_prev(pid);
 	next = tcb_get_next(pid);
+
+	/* Check if pid is actually in this queue as the only element or just detached */
+	if (prev == NUM_IDS && next == NUM_IDS && head != pid) {
+		return;
+	}
 
 	if (prev == NUM_IDS) {
 		if (next == NUM_IDS) {
@@ -103,11 +110,10 @@ void tqueue_remove(unsigned int chid, unsigned int pid)
 			tcb_set_next(prev, NUM_IDS);
 			tqueue_set_tail(chid, prev);
 		} else {
-			if (prev != next)
-				tcb_set_next(prev, next);
+			tcb_set_next(prev, next);
 			tcb_set_prev(next, prev);
 		}
 	}
-  tcb_set_prev(pid, NUM_IDS);
-  tcb_set_next(pid, NUM_IDS);
+	tcb_set_prev(pid, NUM_IDS);
+	tcb_set_next(pid, NUM_IDS);
 }

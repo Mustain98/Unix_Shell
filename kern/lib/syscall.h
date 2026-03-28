@@ -65,6 +65,8 @@ enum __syscall_nr {
   SYS_kill,         /* send signal to process */
   SYS_pause,        /* wait for signal */
   SYS_sigreturn,    /* return from signal handler */
+  SYS_exit,
+  SYS_waitpid,
 
   MAX_SYSCALL_NR	/* XXX: always put it at the end of __syscall_nr */
 };

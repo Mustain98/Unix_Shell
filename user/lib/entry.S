@@ -18,8 +18,13 @@ args_exist:
 	/* Jump to the C part. */
 	call	main
 
-	/* When returning, push the return value on the stack. */
+	/* When returning, save return value */
 	pushl	%eax
+
+	/* Syscall SYS_exit (30) */
+	movl	$30, %eax
+	int	$48
+
 spin:
-	call	yield      /* yield CPU so pipeline stages can make progress */
+	call	yield
 	jmp	spin

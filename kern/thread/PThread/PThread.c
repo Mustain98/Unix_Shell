@@ -95,8 +95,8 @@ void thread_exit(void)
 
   new_cur_pid = tqueue_dequeue(NUM_IDS);
   if (new_cur_pid == NUM_IDS) {
-    // No other threads - this shouldn't happen in normal operation
-    KERN_PANIC("thread_exit: no threads to switch to!\n");
+    /* Queue is empty — fall back to the idle process (pid 1) which is always alive */
+    new_cur_pid = 1;
   }
 
   tcb_set_state(new_cur_pid, TSTATE_RUN);

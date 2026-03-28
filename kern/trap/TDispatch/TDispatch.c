@@ -121,6 +121,12 @@ void syscall_dispatch(tf_t *tf)
   case SYS_sigreturn:
     sys_sigreturn(tf);
     break;
+  case SYS_exit:
+    sys_exit(tf);
+    break;
+  case SYS_waitpid:
+    sys_waitpid(tf);
+    break;
 
   default:
     syscall_set_errno(E_INVAL_CALLNR);

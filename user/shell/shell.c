@@ -865,15 +865,13 @@ static int run_pipeline(char *buf)
     if (in_fd >= 0)
         close(in_fd);
 
-    shell_yield_briefly();
-    
-    /* Garbage collect spawned child processes to avoid MAX_CHILDREN quota exhaustion */
+    /* Block on waitpid for each child: wait for them to reach TSTATE_DEAD */
     for (i = 0; i < nstages; i++) {
         if (pids[i] >= 0) {
-            sys_kill(pids[i], 9); /* SIGKILL */
+            sys_waitpid(pids[i]);
         }
     }
-
+    
     return 0;
 }
 

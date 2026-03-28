@@ -29,6 +29,9 @@ void sys_cat(tf_t *tf);
 void sys_touch(tf_t *tf);
 void sys_readline(tf_t *tf);
 
+void sys_exit(tf_t *tf);
+void sys_waitpid(tf_t *tf);
+
 void syscall_set_errno(unsigned int errno);
 
 #endif /* _KERN_ */

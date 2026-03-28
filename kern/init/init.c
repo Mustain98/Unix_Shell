@@ -58,7 +58,7 @@ kern_main (void)
     */
 
     pid = proc_create (_binary___obj_user_idle_idle_start, 1000);
-    pid = proc_create (_binary___obj_user_shell_shell_start, 1000);
+    pid = proc_create (_binary___obj_user_shell_shell_start, 200000);
     
     // Initialize console file descriptors for the shell
     console_init_fds(pid);
