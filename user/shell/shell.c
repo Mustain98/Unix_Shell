@@ -925,8 +925,9 @@ int main(int argc, char **argv) {
   // 0: normal mode
   int mode = 0;
   char buf[1024];
-  printf("\n\n******** UNIX-Shell *********\n");
-  printf("\n********  Group 11  ********\n\n");
+  printf("\n\t\t************************ UNIX-Shell *************************\n");
+  printf("\n\t\t************************* Group 11 **************************\n");
+  printf("\n\t\t********************* IDs 09 42 49 66 ***********************\n\n");
   // close(open("usertests.ran", O_CREATE));  // Disabled - requires proper cwd
   // init
 

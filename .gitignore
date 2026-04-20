@@ -1,3 +1,4 @@
 obj/*
 .gdbinit
 certikos.img
+*.DS_Store
